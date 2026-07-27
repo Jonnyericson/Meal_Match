@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "MealMatch Simple",
+    "slug": "mealmatch-simple",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ]
+  }
+}
