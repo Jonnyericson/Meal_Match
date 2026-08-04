@@ -7,7 +7,7 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f7fa;
+  background: linear-gradient(135deg, #f8fff9 0%, #f1f6f3 100%);
   color: #2c3e50;
 }
 
@@ -21,26 +21,228 @@ body {
   flex: 1;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 40px 20px 60px;
   width: 100%;
+}
+
+.main-content section {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e7f3ea;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 12px 32px rgba(39, 174, 96, 0.08);
   text-align: center;
 }
 
 .main-content h1 {
-  font-size: 32px;
+  font-size: 36px;
   margin-bottom: 16px;
-  color: #2ecc71;
+  color: #1f8f4f;
 }
 
 .main-content p {
   font-size: 18px;
-  color: #7f8c8d;
-  line-height: 1.6;
+  color: #5f6f7a;
+  line-height: 1.7;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.main-content .hero-badges {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.main-content .hero-badges span {
+  background: #e9f8ef;
+  color: #1f8f4f;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.inventory-page {
+  text-align: left;
+}
+
+.inventory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.inventory-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #1f8f4f;
+  margin-bottom: 6px;
+}
+
+.inventory-intro {
+  margin: 0;
+  max-width: 620px;
+}
+
+.inventory-pill {
+  background: #eaf8ee;
+  color: #1f8f4f;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.inventory-form,
+.inventory-panel {
+  background: #f9fdf9;
+  border: 1px solid #dff2e4;
+  border-radius: 18px;
+  padding: 24px;
+}
+
+.inventory-form h2,
+.inventory-panel h2 {
+  margin-bottom: 16px;
+  color: #1f8f4f;
+}
+
+.inventory-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-weight: 600;
+  color: #355645;
+}
+
+.inventory-form input,
+.inventory-form select,
+.inventory-form textarea {
+  border: 1px solid #cfe9d8;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 15px;
+  color: #294236;
+  background: white;
+}
+
+.inventory-form input:focus,
+.inventory-form select:focus,
+.inventory-form textarea:focus {
+  outline: 2px solid rgba(31, 143, 79, 0.2);
+  border-color: #1f8f4f;
+}
+
+.inventory-form button {
+  margin-top: 8px;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #2e9d5a 0%, #1f8f4f 100%);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inventory-form button:hover {
+  transform: translateY(-1px);
+}
+
+.inventory-status {
+  margin-bottom: 16px;
+}
+
+.inventory-status p {
+  margin: 0;
+  font-size: 15px;
+  color: #5f6f7a;
+  max-width: none;
+}
+
+.inventory-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inventory-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  background: white;
+  border: 1px solid #e9f4eb;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.inventory-item-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.inventory-item h3 {
+  color: #2b4b3a;
+  font-size: 16px;
+}
+
+.inventory-item span {
+  background: #eef8f0;
+  color: #1f8f4f;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.inventory-item p,
+.inventory-item small {
+  margin: 0;
+  font-size: 14px;
+  color: #5f6f7a;
+}
+
+.inventory-item button {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #fff0f0;
+  color: #c85050;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+@media screen and (max-width: 900px) {
+  .inventory-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media screen and (max-width: 768px) {
   .main-content {
-    padding: 20px 16px;
+    padding: 20px 16px 40px;
+  }
+
+  .main-content section {
+    padding: 24px 18px;
   }
 
   .main-content h1 {
@@ -49,5 +251,13 @@ body {
 
   .main-content p {
     font-size: 16px;
+  }
+
+  .inventory-header {
+    flex-direction: column;
+  }
+
+  .inventory-item {
+    flex-direction: column;
   }
 }

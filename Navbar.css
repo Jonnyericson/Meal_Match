@@ -10,7 +10,8 @@
 }
 
 .navbar {
-  background-color: #ffffff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
   box-shadow: var(--shadow);
   position: sticky;
   top: 0;
@@ -24,7 +25,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 70px;
+  height: 72px;
 }
 
 /* Logo */
@@ -63,19 +64,20 @@
 
 .nav-link {
   display: block;
-  padding: 8px 16px;
+  padding: 8px 14px;
   color: var(--text-dark);
   text-decoration: none;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.3s ease;
-  border-radius: 4px;
+  border-radius: 999px;
   white-space: nowrap;
 }
 
 .nav-link:hover {
   background-color: var(--background-light);
   color: var(--primary-color);
+  transform: translateY(-1px);
 }
 
 .nav-link.active {
