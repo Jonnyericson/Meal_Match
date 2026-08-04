@@ -1,16 +1,25 @@
 import React, { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import './Navbar.css';
+
+const navItems = [
+  { to: '/', label: '🏠 Home' },
+  { to: '/dashboard', label: '📊 Dashboard' },
+  { to: '/meal-plans', label: '📅 Meal Plans' },
+  { to: '/recipes', label: '👨‍🍳 Recipes' },
+  { to: '/inventory', label: '📦 Inventory' },
+  { to: '/shopping-list', label: '🛒 Shopping List' },
+  { to: '/favorites', label: '❤️ Favorites' },
+];
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeLink, setActiveLink] = useState('/dashboard');
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const handleNavClick = (link) => {
-    setActiveLink(link);
+  const closeMenu = () => {
     setIsMenuOpen(false);
   };
 
@@ -19,9 +28,9 @@ const Navbar = () => {
       <div className="navbar-container">
         {/* Logo */}
         <div className="navbar-logo">
-          <a href="/" className="logo-link">
+          <NavLink to="/" className="logo-link" onClick={closeMenu}>
             🍽️ MealMatch
-          </a>
+          </NavLink>
         </div>
 
         {/* Hamburger Menu */}
@@ -36,88 +45,40 @@ const Navbar = () => {
 
         {/* Navigation Links */}
         <ul className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
-          <li className="nav-item">
-            <a
-              href="/dashboard"
-              className={`nav-link ${activeLink === '/dashboard' ? 'active' : ''}`}
-              onClick={() => handleNavClick('/dashboard')}
-            >
-              📊 Dashboard
-            </a>
-          </li>
-
-          <li className="nav-item">
-            <a
-              href="/meal-plans"
-              className={`nav-link ${activeLink === '/meal-plans' ? 'active' : ''}`}
-              onClick={() => handleNavClick('/meal-plans')}
-            >
-              📅 Meal Plans
-            </a>
-          </li>
-
-          <li className="nav-item">
-            <a
-              href="/recipes"
-              className={`nav-link ${activeLink === '/recipes' ? 'active' : ''}`}
-              onClick={() => handleNavClick('/recipes')}
-            >
-              👨‍🍳 Recipes
-            </a>
-          </li>
-
-          <li className="nav-item">
-            <a
-              href="/inventory"
-              className={`nav-link ${activeLink === '/inventory' ? 'active' : ''}`}
-              onClick={() => handleNavClick('/inventory')}
-            >
-              📦 Inventory
-            </a>
-          </li>
-
-          <li className="nav-item">
-            <a
-              href="/shopping-list"
-              className={`nav-link ${activeLink === '/shopping-list' ? 'active' : ''}`}
-              onClick={() => handleNavClick('/shopping-list')}
-            >
-              🛒 Shopping List
-            </a>
-          </li>
-
-          <li className="nav-item">
-            <a
-              href="/favorites"
-              className={`nav-link ${activeLink === '/favorites' ? 'active' : ''}`}
-              onClick={() => handleNavClick('/favorites')}
-            >
-              ❤️ Favorites
-            </a>
-          </li>
+          {navItems.map((item) => (
+            <li className="nav-item" key={item.to}>
+              <NavLink
+                to={item.to}
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`.trim()}
+                onClick={closeMenu}
+              >
+                {item.label}
+              </NavLink>
+            </li>
+          ))}
 
           {/* Divider */}
           <li className="nav-divider"></li>
 
           {/* User Menu */}
           <li className="nav-item">
-            <a
-              href="/profile"
-              className={`nav-link ${activeLink === '/profile' ? 'active' : ''}`}
-              onClick={() => handleNavClick('/profile')}
+            <NavLink
+              to="/profile"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`.trim()}
+              onClick={closeMenu}
             >
               👤 Profile
-            </a>
+            </NavLink>
           </li>
 
           <li className="nav-item">
-            <a
-              href="/logout"
-              className="nav-link logout-link"
-              onClick={() => handleNavClick('/logout')}
+            <NavLink
+              to="/logout"
+              className={({ isActive }) => `nav-link logout-link ${isActive ? 'active' : ''}`.trim()}
+              onClick={closeMenu}
             >
               🚪 Logout
-            </a>
+            </NavLink>
           </li>
         </ul>
       </div>
