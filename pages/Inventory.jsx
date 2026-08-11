@@ -1,26 +1,55 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-const initialIngredients = [
-  { id: 1, name: 'Eggs', quantity: '12', category: 'Dairy', notes: 'Breakfast staples' },
-  { id: 2, name: 'Spinach', quantity: '1 bag', category: 'Produce', notes: 'Use this week' },
-];
+const initialFormData = {
+  name: '',
+  quantity: '',
+  category: 'Produce',
+  notes: '',
+};
 
 const Inventory = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    quantity: '',
-    category: 'Produce',
-    notes: '',
-  });
-  const [ingredients, setIngredients] = useState(initialIngredients);
-  const [statusMessage, setStatusMessage] = useState('Add a fresh ingredient to keep your kitchen organized.');
+  const [formData, setFormData] = useState(initialFormData);
+  const [ingredients, setIngredients] = useState([]);
+  const [statusMessage, setStatusMessage] = useState('Loading inventory...');
+
+  const fetchIngredients = async () => {
+    const response = await fetch('/api/ingredients');
+    return response.ok ? response.json() : [];
+  };
+
+  const createIngredient = async (ingredient) => {
+    const response = await fetch('/api/ingredients', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ingredient),
+    });
+    return response.json();
+  };
+
+  const removeIngredient = async (id) => {
+    await fetch(`/api/ingredients/${id}`, { method: 'DELETE' });
+  };
+
+  useEffect(() => {
+    const loadIngredients = async () => {
+      const storedIngredients = await fetchIngredients();
+      setIngredients(storedIngredients);
+      setStatusMessage(
+        storedIngredients.length
+          ? 'Your pantry was loaded successfully.'
+          : 'Add a fresh ingredient to keep your kitchen organized.'
+      );
+    };
+
+    loadIngredients();
+  }, []);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!formData.name.trim()) {
@@ -29,20 +58,21 @@ const Inventory = () => {
     }
 
     const newIngredient = {
-      id: Date.now(),
       name: formData.name.trim(),
       quantity: formData.quantity.trim() || '1',
       category: formData.category,
       notes: formData.notes.trim(),
     };
 
-    setIngredients((prev) => [newIngredient, ...prev]);
-    setStatusMessage(`${newIngredient.name} was added to your inventory.`);
-    setFormData({ name: '', quantity: '', category: 'Produce', notes: '' });
+    const savedIngredient = await createIngredient(newIngredient);
+    setIngredients((prev) => [savedIngredient, ...prev]);
+    setStatusMessage(`${savedIngredient.name} was added to your inventory.`);
+    setFormData(initialFormData);
   };
 
-  const handleRemove = (id) => {
+  const handleRemove = async (id) => {
     const removedItem = ingredients.find((ingredient) => ingredient.id === id);
+    await removeIngredient(id);
     setIngredients((prev) => prev.filter((ingredient) => ingredient.id !== id));
     if (removedItem) {
       setStatusMessage(`${removedItem.name} was removed from your inventory.`);
