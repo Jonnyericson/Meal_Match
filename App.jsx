@@ -10,6 +10,9 @@ import ShoppingList from './pages/ShoppingList';
 import Favorites from './pages/Favorites';
 import Profile from './pages/Profile';
 import Logout from './pages/Logout';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import RequireAuth from './RequireAuth';
 import './App.css';
 
 function App() {
@@ -19,14 +22,72 @@ function App() {
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/meal-plans" element={<MealPlans />} />
-          <Route path="/recipes" element={<Recipes />} />
-          <Route path="/inventory" element={<Inventory />} />
-          <Route path="/shopping-list" element={<ShoppingList />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/logout" element={<Logout />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/dashboard"
+            element={
+              <RequireAuth>
+                <Dashboard />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/meal-plans"
+            element={
+              <RequireAuth>
+                <MealPlans />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/recipes"
+            element={
+              <RequireAuth>
+                <Recipes />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/inventory"
+            element={
+              <RequireAuth>
+                <Inventory />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/shopping-list"
+            element={
+              <RequireAuth>
+                <ShoppingList />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/favorites"
+            element={
+              <RequireAuth>
+                <Favorites />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <RequireAuth>
+                <Profile />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/logout"
+            element={
+              <RequireAuth>
+                <Logout />
+              </RequireAuth>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
