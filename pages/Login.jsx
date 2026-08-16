@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext.jsx';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, loginAsDemoUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
@@ -19,6 +19,20 @@ const Login = () => {
 
     try {
       await login(email.trim(), password);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDemoOverride = async () => {
+    setError('');
+    setIsSubmitting(true);
+
+    try {
+      await loginAsDemoUser();
       navigate(from, { replace: true });
     } catch (err) {
       setError(err.message);
@@ -59,6 +73,11 @@ const Login = () => {
 
           <button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Signing in…' : 'Sign in'}
+          </button>
+
+          <button type="button" className="demo-login-button" onClick={handleDemoOverride} disabled={isSubmitting}>
+            Skip login for local testing
+            <span className="demo-login-tag">Dev mode</span>
           </button>
         </form>
 
