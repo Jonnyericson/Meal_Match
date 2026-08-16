@@ -2,6 +2,7 @@ import express from 'express';
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import crypto from 'crypto';
+import { calculateShoppingList } from './shoppingListUtils.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -37,6 +38,20 @@ const authenticate = async (req, res, next) => {
   }
 
   try {
+    // Support demo mode token for local testing
+    if (token === 'demo-local-token') {
+      req.user = {
+        id: 0,
+        email: 'demo@mealmatch.local',
+        name: 'Demo User',
+        favoriteCuisine: 'Italian',
+        dietaryRestrictions: '',
+        sessionToken: 'demo-local-token',
+      };
+      next();
+      return;
+    }
+
     const db = await dbPromise;
     const user = await db.get('SELECT * FROM users WHERE sessionToken = ?', token);
     if (!user) {
@@ -61,6 +76,17 @@ const ensureTables = async () => {
       notes TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS recipes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      mealType TEXT,
+      cuisine TEXT,
+      prepTime TEXT,
+      cookTime TEXT,
+      ingredients TEXT,
+      instructions TEXT
+    );
+
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL UNIQUE,
@@ -71,7 +97,35 @@ const ensureTables = async () => {
       dietaryRestrictions TEXT,
       sessionToken TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS meal_plans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER NOT NULL,
+      dayOfWeek INTEGER NOT NULL,
+      mealType TEXT NOT NULL,
+      recipeId INTEGER,
+      recipeName TEXT,
+      recipeDetails TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `);
+
+  const ingredientCount = await db.get('SELECT COUNT(*) AS count FROM ingredients');
+  if (ingredientCount.count === 0) {
+    await db.run(`INSERT INTO ingredients (name, quantity, category, notes) VALUES
+      ('Tomatoes', '2 lbs', 'Produce', 'Best used this week'),
+      ('Chicken Breast', '1 pack', 'Protein', 'Great for bowls and salads'),
+      ('Brown Rice', '1 bag', 'Pantry', 'Keep for quick lunches'),
+      ('Greek Yogurt', '1 tub', 'Dairy', 'Use for parfaits and sauces')`);
+  }
+
+  const recipeCount = await db.get('SELECT COUNT(*) AS count FROM recipes');
+  if (recipeCount.count === 0) {
+    await db.run(`INSERT INTO recipes (title, mealType, cuisine, prepTime, cookTime, ingredients, instructions) VALUES
+      ('Garlic Chicken Bowl', 'Dinner', 'Mediterranean', '15 min', '25 min', 'Chicken breast, brown rice, spinach, lemon, garlic', 'Cook the chicken with garlic and lemon, serve over brown rice with spinach.'),
+      ('Veggie Pasta', 'Dinner', 'Italian', '20 min', '20 min', 'Pasta, tomatoes, spinach, olive oil, parmesan', 'Sauté tomatoes and spinach, toss with pasta and parmesan.'),
+      ('Berry Yogurt Parfait', 'Breakfast', 'American', '10 min', '0 min', 'Greek yogurt, berries, granola, honey', 'Layer yogurt, berries, and granola in a glass and drizzle with honey.')`);
+  }
 };
 
 app.get('/api/ingredients', async (req, res) => {
@@ -121,6 +175,186 @@ app.delete('/api/ingredients/:id', async (req, res) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete ingredient.' });
+  }
+});
+
+app.get('/api/recipes', async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const recipes = await db.all('SELECT * FROM recipes ORDER BY id DESC');
+    res.json(recipes);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch recipes.' });
+  }
+});
+
+app.get('/api/shopping-list', authenticate, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const [ingredients, mealPlans, recipes] = await Promise.all([
+      db.all('SELECT * FROM ingredients ORDER BY id DESC'),
+      db.all('SELECT * FROM meal_plans WHERE userId = ? ORDER BY dayOfWeek, mealType', req.user.id),
+      db.all('SELECT * FROM recipes ORDER BY id DESC'),
+    ]);
+
+    const list = calculateShoppingList({ inventory: ingredients, mealPlans, recipes });
+    res.json(list);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to generate shopping list.' });
+  }
+});
+
+app.post('/api/recipes', async (req, res) => {
+  try {
+    const { title, mealType, cuisine, prepTime, cookTime, ingredients, instructions } = req.body;
+    if (!title?.trim()) {
+      return res.status(400).json({ error: 'Recipe title is required.' });
+    }
+
+    const db = await dbPromise;
+    const result = await db.run(
+      'INSERT INTO recipes (title, mealType, cuisine, prepTime, cookTime, ingredients, instructions) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      title.trim(),
+      mealType || 'Dinner',
+      cuisine || 'General',
+      prepTime || '30 min',
+      cookTime || '20 min',
+      ingredients || '',
+      instructions || ''
+    );
+
+    const savedRecipe = {
+      id: result.lastID,
+      title: title.trim(),
+      mealType: mealType || 'Dinner',
+      cuisine: cuisine || 'General',
+      prepTime: prepTime || '30 min',
+      cookTime: cookTime || '20 min',
+      ingredients: ingredients || '',
+      instructions: instructions || '',
+    };
+
+    res.status(201).json(savedRecipe);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save recipe.' });
+  }
+});
+
+app.delete('/api/recipes/:id', async (req, res) => {
+  try {
+    const db = await dbPromise;
+    await db.run('DELETE FROM recipes WHERE id = ?', req.params.id);
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete recipe.' });
+  }
+});
+
+// Meal Plans endpoints
+app.get('/api/meal-plans', authenticate, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const mealPlans = await db.all(
+      'SELECT * FROM meal_plans WHERE userId = ? ORDER BY dayOfWeek, mealType',
+      req.user.id
+    );
+    res.json(mealPlans);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch meal plans.' });
+  }
+});
+
+app.post('/api/meal-plans', authenticate, async (req, res) => {
+  try {
+    const { dayOfWeek, mealType, recipeId, recipeName, recipeDetails } = req.body;
+
+    if (dayOfWeek === undefined || dayOfWeek < 0 || dayOfWeek > 6) {
+      return res.status(400).json({ error: 'Invalid day of week.' });
+    }
+
+    if (!mealType?.trim()) {
+      return res.status(400).json({ error: 'Meal type is required.' });
+    }
+
+    const db = await dbPromise;
+    const result = await db.run(
+      'INSERT INTO meal_plans (userId, dayOfWeek, mealType, recipeId, recipeName, recipeDetails) VALUES (?, ?, ?, ?, ?, ?)',
+      req.user.id,
+      dayOfWeek,
+      mealType.trim(),
+      recipeId || null,
+      recipeName?.trim() || '',
+      recipeDetails?.trim() || ''
+    );
+
+    const savedMealPlan = {
+      id: result.lastID,
+      userId: req.user.id,
+      dayOfWeek,
+      mealType: mealType.trim(),
+      recipeId: recipeId || null,
+      recipeName: recipeName?.trim() || '',
+      recipeDetails: recipeDetails?.trim() || '',
+      createdAt: new Date().toISOString(),
+    };
+
+    res.status(201).json(savedMealPlan);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save meal plan.' });
+  }
+});
+
+app.put('/api/meal-plans/:id', authenticate, async (req, res) => {
+  try {
+    const { dayOfWeek, mealType, recipeId, recipeName, recipeDetails } = req.body;
+
+    if (dayOfWeek === undefined || dayOfWeek < 0 || dayOfWeek > 6) {
+      return res.status(400).json({ error: 'Invalid day of week.' });
+    }
+
+    if (!mealType?.trim()) {
+      return res.status(400).json({ error: 'Meal type is required.' });
+    }
+
+    const db = await dbPromise;
+    
+    // Verify ownership
+    const mealPlan = await db.get('SELECT userId FROM meal_plans WHERE id = ?', req.params.id);
+    if (!mealPlan || mealPlan.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized to update this meal plan.' });
+    }
+
+    await db.run(
+      'UPDATE meal_plans SET dayOfWeek = ?, mealType = ?, recipeId = ?, recipeName = ?, recipeDetails = ? WHERE id = ?',
+      dayOfWeek,
+      mealType.trim(),
+      recipeId || null,
+      recipeName?.trim() || '',
+      recipeDetails?.trim() || '',
+      req.params.id
+    );
+
+    const updated = await db.get('SELECT * FROM meal_plans WHERE id = ?', req.params.id);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update meal plan.' });
+  }
+});
+
+app.delete('/api/meal-plans/:id', authenticate, async (req, res) => {
+  try {
+    const db = await dbPromise;
+
+    // Verify ownership
+    const mealPlan = await db.get('SELECT userId FROM meal_plans WHERE id = ?', req.params.id);
+    if (!mealPlan || mealPlan.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized to delete this meal plan.' });
+    }
+
+    await db.run('DELETE FROM meal_plans WHERE id = ?', req.params.id);
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete meal plan.' });
   }
 });
 

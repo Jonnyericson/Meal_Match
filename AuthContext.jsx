@@ -3,6 +3,14 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 const AuthContext = createContext(null);
 const TOKEN_KEY = 'mealMatchToken';
 const USER_KEY = 'mealMatchUser';
+const DEMO_TOKEN = 'demo-local-token';
+const DEMO_USER = {
+  id: 0,
+  email: 'demo@mealmatch.local',
+  name: 'Demo User',
+  favoriteCuisine: 'Italian',
+  dietaryRestrictions: '',
+};
 
 const getSavedUser = () => {
   try {
@@ -21,6 +29,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    if (token === DEMO_TOKEN) {
+      setUser(DEMO_USER);
+      localStorage.setItem(USER_KEY, JSON.stringify(DEMO_USER));
       setLoading(false);
       return;
     }
@@ -97,6 +112,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginAsDemoUser = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      saveAuth(DEMO_USER, DEMO_TOKEN);
+      return DEMO_USER;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const register = async (registrationData) => {
     setLoading(true);
     setError(null);
@@ -159,7 +186,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, error, login, register, logout, updateProfile }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, error, login, loginAsDemoUser, register, logout, updateProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );
