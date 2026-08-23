@@ -15,7 +15,7 @@ A responsive React navigation bar component designed for the MealMatch meal plan
 
 Based on the MealMatch ER diagram, the navbar includes:
 
-1. **Dashboard** 📊 - Overview and home page
+1. **Home** 🏠 - Main meal planning workspace
 2. **Meal Plans** 📅 - Weekly meal planning interface
 3. **Recipes** 👨‍🍳 - Browse and search recipes
 4. **Inventory** 📦 - Manage user pantry/ingredients
@@ -94,8 +94,8 @@ import { FiHome, FiCalendar, FiChef } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 
 // Replace <a> tags with <Link>:
-<Link to="/dashboard" className={`nav-link ${activeLink === '/dashboard' ? 'active' : ''}`}>
-  📊 Dashboard
+<Link to="/" className={`nav-link ${activeLink === '/' ? 'active' : ''}`}>
+  🏠 Home
 </Link>
 ```
 
@@ -120,7 +120,7 @@ The navbar links correspond to the MealMatch entities:
 
 | Link | Related Entity |
 |------|---|
-| Dashboard | User |
+| Home | User |
 | Meal Plans | MealPlan, MealPlanEntry |
 | Recipes | Recipe, MealPlanEntry |
 | Inventory | UserInventory, Ingredient |

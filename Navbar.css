@@ -28,6 +28,21 @@
   height: 72px;
 }
 
+@media screen and (min-width: 769px) {
+  .navbar-container {
+    justify-content: flex-start;
+  }
+
+  .navbar-logo {
+    position: relative;
+    left: -8px;
+  }
+
+  .nav-menu {
+    margin-left: 28px;
+  }
+}
+
 /* Logo */
 .navbar-logo {
   flex-shrink: 0;

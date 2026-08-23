@@ -11,7 +11,7 @@ const Navbar = () => {
     { to: '/', label: '🏠 Home' },
     ...(user
       ? [
-          { to: '/dashboard', label: '📊 Dashboard' },
+          { to: '/meal-match', label: '✨ Meal Match' },
           { to: '/meal-plans', label: '📅 Meal Plans' },
           { to: '/recipes', label: '👨‍🍳 Recipes' },
           { to: '/inventory', label: '📦 Inventory' },

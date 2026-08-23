@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { calculateShoppingList } from './shoppingListUtils.js';
+import { calculateMealMatches } from './shoppingListUtils.js';
 
 test('derives missing ingredients from planned meals against inventory', () => {
   const shoppingList = calculateShoppingList({
@@ -29,4 +30,20 @@ test('derives missing ingredients from planned meals against inventory', () => {
   ]);
 
   assert.equal(shoppingList.summary.totalMissing, 7);
+});
+
+test('ranks recipes by inventory and shopping-list coverage', () => {
+  const matches = calculateMealMatches({
+    inventory: [{ name: 'Chicken Breast' }, { name: 'Brown Rice' }],
+    shoppingListItems: [{ name: 'spinach' }],
+    recipes: [
+      { id: 1, title: 'Chicken Bowl', ingredients: 'Chicken, brown rice, spinach' },
+      { id: 2, title: 'Pasta', ingredients: 'Pasta, tomato' },
+    ],
+  });
+
+  assert.equal(matches[0].title, 'Chicken Bowl');
+  assert.deepEqual(matches[0].ingredients.map((item) => item.status), ['inventory', 'inventory', 'shopping']);
+  assert.equal(matches[0].coverage, 100);
+  assert.equal(matches[1].missingCount, 2);
 });

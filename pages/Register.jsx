@@ -33,7 +33,7 @@ const Register = () => {
         favoriteCuisine: favoriteCuisine.trim(),
         dietaryRestrictions: dietaryRestrictions.trim(),
       });
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
       setError(err.message);
     } finally {

@@ -2,11 +2,11 @@ import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Navbar from './Navbar';
 import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
 import MealPlans from './pages/MealPlans';
 import Recipes from './pages/Recipes';
 import Inventory from './pages/Inventory';
 import ShoppingList from './pages/ShoppingList';
+import MealMatch from './pages/MealMatch';
 import Favorites from './pages/Favorites';
 import Profile from './pages/Profile';
 import Logout from './pages/Logout';
@@ -21,17 +21,16 @@ function App() {
       <Navbar />
       <main className="main-content">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
           <Route
-            path="/dashboard"
+            path="/"
             element={
               <RequireAuth>
-                <Dashboard />
+                <Home />
               </RequireAuth>
             }
           />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route
             path="/meal-plans"
             element={
@@ -61,6 +60,14 @@ function App() {
             element={
               <RequireAuth>
                 <ShoppingList />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/meal-match"
+            element={
+              <RequireAuth>
+                <MealMatch />
               </RequireAuth>
             }
           />
