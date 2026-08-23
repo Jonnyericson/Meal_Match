@@ -108,6 +108,13 @@ const ensureTables = async () => {
       recipeDetails TEXT,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS favorites (
+      userId INTEGER NOT NULL,
+      recipeId INTEGER NOT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (userId, recipeId)
+    );
   `);
 
   const ingredientCount = await db.get('SELECT COUNT(*) AS count FROM ingredients');
@@ -119,12 +126,27 @@ const ensureTables = async () => {
       ('Greek Yogurt', '1 tub', 'Dairy', 'Use for parfaits and sauces')`);
   }
 
-  const recipeCount = await db.get('SELECT COUNT(*) AS count FROM recipes');
-  if (recipeCount.count === 0) {
-    await db.run(`INSERT INTO recipes (title, mealType, cuisine, prepTime, cookTime, ingredients, instructions) VALUES
-      ('Garlic Chicken Bowl', 'Dinner', 'Mediterranean', '15 min', '25 min', 'Chicken breast, brown rice, spinach, lemon, garlic', 'Cook the chicken with garlic and lemon, serve over brown rice with spinach.'),
-      ('Veggie Pasta', 'Dinner', 'Italian', '20 min', '20 min', 'Pasta, tomatoes, spinach, olive oil, parmesan', 'Sauté tomatoes and spinach, toss with pasta and parmesan.'),
-      ('Berry Yogurt Parfait', 'Breakfast', 'American', '10 min', '0 min', 'Greek yogurt, berries, granola, honey', 'Layer yogurt, berries, and granola in a glass and drizzle with honey.')`);
+  await db.run("DELETE FROM recipes WHERE title = 'Test Recipe'");
+
+  const seedRecipes = [
+    ['Garlic Chicken Bowl', 'Dinner', 'Mediterranean', '15 min', '25 min', 'Chicken breast, brown rice, spinach, lemon, garlic', 'Cook the chicken with garlic and lemon, serve over brown rice with spinach.'],
+    ['Veggie Pasta', 'Dinner', 'Italian', '20 min', '20 min', 'Pasta, tomatoes, spinach, olive oil, parmesan', 'Sauté tomatoes and spinach, toss with pasta and parmesan.'],
+    ['Berry Yogurt Parfait', 'Breakfast', 'American', '10 min', '0 min', 'Greek yogurt, berries, granola, honey', 'Layer yogurt, berries, and granola in a glass and drizzle with honey.'],
+    ['Black Bean Tacos', 'Lunch', 'Mexican', '10 min', '15 min', 'Black beans, tortillas, avocado, tomatoes, lime, cilantro', 'Warm the beans and tortillas, then fill with avocado, tomatoes, lime, and cilantro.'],
+    ['Salmon Sheet Pan Dinner', 'Dinner', 'American', '10 min', '25 min', 'Salmon, potatoes, broccoli, lemon, olive oil', 'Roast the potatoes first, then add salmon and broccoli and finish with lemon.'],
+    ['Apple Cinnamon Oatmeal', 'Breakfast', 'American', '5 min', '10 min', 'Rolled oats, apple, cinnamon, milk, maple syrup', 'Simmer oats with milk, then top with diced apple, cinnamon, and maple syrup.'],
+    ['Chickpea Greek Salad', 'Lunch', 'Mediterranean', '15 min', '0 min', 'Chickpeas, cucumber, tomatoes, feta, olives, lemon', 'Toss the chickpeas and vegetables with feta, olives, and lemon.'],
+    ['Creamy Tomato Soup', 'Lunch', 'Vegetarian', '10 min', '25 min', 'Tomatoes, onion, garlic, vegetable broth, cream, basil', 'Simmer the vegetables in broth, blend until smooth, and finish with cream and basil.'],
+  ];
+
+  for (const recipe of seedRecipes) {
+    const existingRecipe = await db.get('SELECT id FROM recipes WHERE title = ?', recipe[0]);
+    if (!existingRecipe) {
+      await db.run(
+        'INSERT INTO recipes (title, mealType, cuisine, prepTime, cookTime, ingredients, instructions) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        ...recipe
+      );
+    }
   }
 };
 
@@ -247,6 +269,61 @@ app.delete('/api/recipes/:id', async (req, res) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete recipe.' });
+  }
+});
+
+app.get('/api/favorites', authenticate, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const favorites = await db.all(
+      `SELECT recipes.*, favorites.createdAt AS favoritedAt
+       FROM favorites
+       INNER JOIN recipes ON recipes.id = favorites.recipeId
+       WHERE favorites.userId = ?
+       ORDER BY favorites.createdAt DESC, recipes.title ASC`,
+      req.user.id
+    );
+    res.json(favorites);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch favorites.' });
+  }
+});
+
+app.post('/api/favorites', authenticate, async (req, res) => {
+  const recipeId = Number(req.body.recipeId);
+  if (!Number.isInteger(recipeId)) {
+    return res.status(400).json({ error: 'A valid recipe is required.' });
+  }
+
+  try {
+    const db = await dbPromise;
+    const recipe = await db.get('SELECT * FROM recipes WHERE id = ?', recipeId);
+    if (!recipe) {
+      return res.status(404).json({ error: 'Recipe not found.' });
+    }
+
+    await db.run(
+      'INSERT OR IGNORE INTO favorites (userId, recipeId) VALUES (?, ?)',
+      req.user.id,
+      recipeId
+    );
+    res.status(201).json(recipe);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save favorite.' });
+  }
+});
+
+app.delete('/api/favorites/:recipeId', authenticate, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    await db.run(
+      'DELETE FROM favorites WHERE userId = ? AND recipeId = ?',
+      req.user.id,
+      req.params.recipeId
+    );
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove favorite.' });
   }
 });
 
